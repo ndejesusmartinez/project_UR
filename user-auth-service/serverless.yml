@@ -1,0 +1,47 @@
+service: user-auth-service
+frameworkVersion: '4'
+
+useDotenv: true
+
+# Deshabilita el bundler predeterminado de JS/TS en Serverless v4
+build:
+  esbuild: false
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: us-east-1
+  timeout: 10 # Se incrementa a 10s para prevenir timeouts en Cold Starts hacia la base de datos
+  
+  # Vinculación al HTTP API Gateway unificado (3uuw0bobv4)
+  httpApi:
+    id: 3uuw0bobv4
+
+  # Variables de entorno accesibles por las Lambdas
+  environment:
+    PYTHONPATH: "src:." # Permite resolver importaciones limpias desde la carpeta src/
+    DB_URL: ${env:DB_URL}
+    JWT_SECRET: ${env:JWT_SECRET}
+
+plugins:
+  - serverless-python-requirements
+  - serverless-offline
+
+custom:
+  pythonRequirements:
+    dockerizePip: true # Obligatorio: usa Docker para compilar bcrypt y psycopg para AWS Linux
+
+functions:
+  register:
+    handler: src/adapters/entrypoints/lambda_handlers/register_handler.handler
+    events:
+      - httpApi:
+          path: /v1/auth/register
+          method: post
+
+  login:
+    handler: src/adapters/entrypoints/lambda_handlers/login_handler.handler
+    events:
+      - httpApi:
+          path: /v1/auth/login
+          method: post
