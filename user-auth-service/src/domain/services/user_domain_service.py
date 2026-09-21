@@ -5,12 +5,54 @@ from domain.entities.user import User
 from domain.exceptions.user_exceptions import (
     UserAlreadyExistsException,
     InvalidCredentialsException,
+    UserNotFoundException,
 )
 
 class UserDomainService:
     def __init__(self, user_repo: UserRepositoryPort, token_provider: TokenProviderPort):
         self.user_repo = user_repo
         self.token_provider = token_provider
+
+    def list_users(self) -> list[dict]:
+        return [user.to_dict() for user in self.user_repo.find_all()]
+
+    def update_user(self, user_id: str, fields: dict) -> dict:
+        current_user = self.user_repo.find_by_id(user_id)
+        if not current_user:
+            raise UserNotFoundException("Usuario no encontrado.")
+
+        updates = {key: value for key, value in fields.items() if value is not None}
+        for field in ("name", "phone", "email", "role"):
+            if field in updates and not isinstance(updates[field], str):
+                raise ValueError(f"El campo {field} debe ser texto.")
+
+        if "phone" in updates:
+            existing_user = self.user_repo.find_by_phone(updates["phone"])
+            if existing_user and existing_user.id != user_id:
+                raise UserAlreadyExistsException("El número de teléfono ya se encuentra registrado.")
+
+        if "email" in updates:
+            existing_user = self.user_repo.find_by_email(updates["email"])
+            if existing_user and existing_user.id != user_id:
+                raise UserAlreadyExistsException("El correo electrónico ya se encuentra registrado.")
+
+        if "password" in updates:
+            password = updates.pop("password")
+            if not isinstance(password, str) or not password:
+                raise ValueError("El campo password debe ser un texto no vacío.")
+            updates["password_hash"] = self.token_provider.hash_password(password)
+
+        if not updates:
+            raise ValueError("Debe enviar al menos un campo para actualizar.")
+
+        updated_user = self.user_repo.update(user_id, updates)
+        if not updated_user:
+            raise UserNotFoundException("Usuario no encontrado.")
+        return updated_user.to_dict()
+
+    def delete_user(self, user_id: str) -> None:
+        if not self.user_repo.delete(user_id):
+            raise UserNotFoundException("Usuario no encontrado.")
 
     def register_user(self, name: str, phone: str, email: str, raw_password: str, role: str = "CLIENT") -> dict:
         # 1. Regla: El teléfono no puede estar duplicado

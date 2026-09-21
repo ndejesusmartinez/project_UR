@@ -23,3 +23,18 @@ class UserRepositoryPort(ABC):
     def find_by_id(self, user_id: str) -> Optional[User]:
         """Busca un usuario por su UUID."""
         pass
+
+    @abstractmethod
+    def find_all(self) -> list[User]:
+        """Lista todos los usuarios."""
+        pass
+
+    @abstractmethod
+    def update(self, user_id: str, fields: dict) -> Optional[User]:
+        """Actualiza los campos permitidos de un usuario."""
+        pass
+
+    @abstractmethod
+    def delete(self, user_id: str) -> bool:
+        """Elimina un usuario por su UUID."""
+        pass

@@ -7,6 +7,69 @@ class PostgresUserRepository(UserRepositoryPort):
     def __init__(self, db_connection_string: str):
         self.db_url = db_connection_string
 
+    def update(self, user_id: str, fields: dict) -> Optional[User]:
+        allowed_fields = {"name", "phone", "email", "role", "password_hash"}
+        updates = {key: value for key, value in fields.items() if key in allowed_fields}
+        if not self.db_url or not updates:
+            return None
+
+        assignments = ", ".join(f"{field} = %s" for field in updates)
+        values = list(updates.values()) + [user_id]
+        with psycopg.connect(self.db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"UPDATE users SET {assignments} WHERE id = %s "
+                    "RETURNING id, name, phone, email, role, password_hash, created_at",
+                    values
+                )
+                row = cur.fetchone()
+                if not row:
+                    return None
+                conn.commit()
+                return User(
+                    id=str(row[0]),
+                    name=row[1],
+                    phone=row[2],
+                    email=row[3],
+                    role=row[4],
+                    password_hash=row[5],
+                    created_at=row[6]
+                )
+
+    def delete(self, user_id: str) -> bool:
+        if not self.db_url:
+            return False
+
+        with psycopg.connect(self.db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+                deleted = cur.rowcount > 0
+                conn.commit()
+                return deleted
+
+    def find_all(self) -> list[User]:
+        if not self.db_url:
+            return []
+
+        with psycopg.connect(self.db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT id, name, phone, email, role, password_hash, created_at "
+                    "FROM users ORDER BY created_at DESC"
+                )
+                return [
+                    User(
+                        id=str(row[0]),
+                        name=row[1],
+                        phone=row[2],
+                        email=row[3],
+                        role=row[4],
+                        password_hash=row[5],
+                        created_at=row[6]
+                    )
+                    for row in cur.fetchall()
+                ]
+
     def find_by_phone(self, phone: str) -> Optional[User]:
         if not self.db_url:
             return None
