@@ -7,14 +7,42 @@ from domain.exceptions.user_exceptions import (
     InvalidCredentialsException,
     UserNotFoundException,
 )
+from ports.token_revocation_port import TokenRevocationPort
 
 class UserDomainService:
-    def __init__(self, user_repo: UserRepositoryPort, token_provider: TokenProviderPort):
+    def __init__(
+        self,
+        user_repo: UserRepositoryPort,
+        token_provider: TokenProviderPort,
+        token_revocation_store: TokenRevocationPort = None,
+    ):
         self.user_repo = user_repo
         self.token_provider = token_provider
+        self.token_revocation_store = token_revocation_store
 
     def list_users(self) -> list[dict]:
         return [user.to_dict() for user in self.user_repo.find_all()]
+
+    def get_current_user(self, token: str) -> dict:
+        if self.token_revocation_store and self.token_revocation_store.is_revoked(token):
+            raise ValueError("El token fue revocado.")
+
+        payload = self.token_provider.decode_token(token)
+        user_id = payload.get("sub")
+        if not user_id:
+            raise ValueError("El token no contiene un usuario válido.")
+
+        user = self.user_repo.find_by_id(user_id)
+        if not user:
+            raise UserNotFoundException("Usuario no encontrado.")
+        return user.to_dict()
+
+    def logout(self, token: str) -> None:
+        payload = self.token_provider.decode_token(token)
+        expires_at = payload.get("exp")
+        if not expires_at or not self.token_revocation_store:
+            raise ValueError("El token no puede ser revocado.")
+        self.token_revocation_store.revoke(token, int(expires_at))
 
     def update_user(self, user_id: str, fields: dict) -> dict:
         current_user = self.user_repo.find_by_id(user_id)

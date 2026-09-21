@@ -21,3 +21,6 @@ class JwtTokenProvider(TokenProviderPort):
         expire = datetime.now(timezone.utc) + timedelta(days=1)
         to_encode.update({"exp": expire})
         return jwt.encode(to_encode, self.secret, algorithm=self.algorithm)
+
+    def decode_token(self, token: str) -> dict:
+        return jwt.decode(token, self.secret, algorithms=[self.algorithm])

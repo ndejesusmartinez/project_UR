@@ -16,3 +16,8 @@ class TokenProviderPort(ABC):
     def generate_token(self, payload: dict) -> str:
         """Genera un JWT firmado con el payload del usuario."""
         pass
+
+    @abstractmethod
+    def decode_token(self, token: str) -> dict:
+        """Valida y decodifica un JWT."""
+        pass

@@ -46,6 +46,20 @@ functions:
           path: /v1/auth/login
           method: post
 
+  logout:
+    handler: src/adapters/entrypoints/lambda_handlers/logout_handler.handler
+    events:
+      - httpApi:
+          path: /v1/auth/logout
+          method: post
+
+  me:
+    handler: src/adapters/entrypoints/lambda_handlers/me_handler.handler
+    events:
+      - httpApi:
+          path: /v1/user/me
+          method: get
+
   listUsers:
     handler: src/adapters/entrypoints/lambda_handlers/list_users_handler.handler
     events:
