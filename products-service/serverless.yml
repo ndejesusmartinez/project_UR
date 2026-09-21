@@ -1,0 +1,58 @@
+service: products-service
+frameworkVersion: '4'
+
+useDotenv: true
+
+build:
+  esbuild: false
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: us-east-1
+  timeout: 10
+  httpApi:
+    id: 3uuw0bobv4
+  environment:
+    PYTHONPATH: "src:."
+    DB_URL: ${env:DB_URL}
+
+plugins:
+  - serverless-python-requirements
+  - serverless-offline
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+
+functions:
+  createProduct:
+    handler: src/adapters/entrypoints/lambda_handlers/create_product_handler.handler
+    events:
+      - httpApi:
+          path: /v1/products
+          method: post
+
+  listProducts:
+    handler: src/adapters/entrypoints/lambda_handlers/list_products_handler.handler
+    events:
+      - httpApi:
+          path: /v1/products
+          method: get
+
+  getProduct:
+    handler: src/adapters/entrypoints/lambda_handlers/get_product_handler.handler
+    events:
+      - httpApi:
+          path: /v1/products/{product_id}
+          method: get
+
+  manageProduct:
+    handler: src/adapters/entrypoints/lambda_handlers/manage_product_handler.handler
+    events:
+      - httpApi:
+          path: /v1/products/{product_id}
+          method: patch
+      - httpApi:
+          path: /v1/products/{product_id}
+          method: delete

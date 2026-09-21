@@ -1,0 +1,12 @@
+{
+  "name": "products-service",
+  "version": "1.0.0",
+  "description": "Serverless product microservice",
+  "scripts": {
+    "test": "python -m compileall -q src"
+  },
+  "devDependencies": {
+    "serverless-offline": "^14.8.0",
+    "serverless-python-requirements": "^6.1.2"
+  }
+}
