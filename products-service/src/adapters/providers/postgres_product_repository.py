@@ -27,7 +27,8 @@ class PostgresProductRepository(ProductRepositoryPort):
                         description TEXT,
                         price NUMERIC(10, 2) NOT NULL,
                         is_available BOOLEAN DEFAULT TRUE,
-                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        path VARCHAR(100)
                     )
                     """
                 )
@@ -39,16 +40,17 @@ class PostgresProductRepository(ProductRepositoryPort):
         description: Optional[str],
         price: Decimal,
         is_available: bool,
+        path: str,
     ) -> Product:
         with psycopg.connect(self.db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO products (name, description, price, is_available)
-                    VALUES (%s, %s, %s, %s)
-                    RETURNING id, name, description, price, is_available, created_at
+                    INSERT INTO products (name, description, price, is_available, path)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id, name, description, price, is_available, created_at, path
                     """,
-                    (name, description, price, is_available),
+                    (name, description, price, is_available, path),
                 )
                 row = cur.fetchone()
                 conn.commit()
@@ -59,6 +61,7 @@ class PostgresProductRepository(ProductRepositoryPort):
                     price=row[3],
                     is_available=row[4],
                     created_at=row[5],
+                    path=row[6],
                 )
 
     @staticmethod
@@ -70,13 +73,14 @@ class PostgresProductRepository(ProductRepositoryPort):
             price=row[3],
             is_available=row[4],
             created_at=row[5],
+            path=row[6],
         )
 
     def find_all(self) -> list[Product]:
         with psycopg.connect(self.db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id, name, description, price, is_available, created_at "
+                    "SELECT id, name, description, price, is_available, created_at, path "
                     "FROM products ORDER BY created_at DESC"
                 )
                 return [self._to_product(row) for row in cur.fetchall()]
@@ -85,7 +89,7 @@ class PostgresProductRepository(ProductRepositoryPort):
         with psycopg.connect(self.db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id, name, description, price, is_available, created_at "
+                    "SELECT id, name, description, price, is_available, created_at, path "
                     "FROM products WHERE id = %s",
                     (product_id,),
                 )
@@ -99,7 +103,7 @@ class PostgresProductRepository(ProductRepositoryPort):
             with conn.cursor() as cur:
                 cur.execute(
                     f"UPDATE products SET {assignments} WHERE id = %s "
-                    "RETURNING id, name, description, price, is_available, created_at",
+                    "RETURNING id, name, description, price, is_available, created_at, path",
                     values,
                 )
                 row = cur.fetchone()

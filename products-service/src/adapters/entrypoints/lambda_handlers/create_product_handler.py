@@ -37,11 +37,16 @@ def handler(event, context):
         if not isinstance(is_available, bool):
             raise ValueError("is_available debe ser booleano.")
 
+        path = body.get("path")
+        if path is not None and not isinstance(path, str):
+            raise ValueError("El path debe ser texto.")
+
         product = product_service.create_product(
             name=name,
             description=description,
             price=price,
             is_available=is_available,
+            path=path,
         )
         return {
             "statusCode": 201,

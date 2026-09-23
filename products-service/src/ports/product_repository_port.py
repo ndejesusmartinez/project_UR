@@ -15,6 +15,7 @@ class ProductRepositoryPort(ABC):
         description: Optional[str],
         price: Decimal,
         is_available: bool,
+        path: str,
     ) -> Product:
         pass
 

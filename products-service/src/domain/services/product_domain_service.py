@@ -14,6 +14,7 @@ class ProductDomainService:
     def create_product(
         self,
         name: str,
+        path: str,
         description: Optional[str],
         price: Decimal,
         is_available: bool = True,
@@ -31,6 +32,7 @@ class ProductDomainService:
             description=description,
             price=price,
             is_available=is_available,
+            path=path,
         )
 
     def list_products(self) -> list[Product]:

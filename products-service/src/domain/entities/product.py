@@ -13,6 +13,7 @@ class Product:
         price: Decimal,
         is_available: bool,
         created_at: datetime,
+        path: str,
     ):
         self.id = id
         self.name = name
@@ -20,6 +21,7 @@ class Product:
         self.price = price
         self.is_available = is_available
         self.created_at = created_at
+        self.path = path
 
     def to_dict(self) -> dict:
         return {
@@ -29,4 +31,5 @@ class Product:
             "price": float(self.price),
             "is_available": self.is_available,
             "created_at": self.created_at.isoformat(),
+            "path": self.path,
         }
