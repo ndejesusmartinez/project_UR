@@ -103,8 +103,8 @@ class UserDomainService:
             "access_token": token
         }
 
-    def authenticate_user(self, phone: str, email: str, raw_password: str) -> dict:
-        user = self.user_repo.find_by_phone(phone)
+    def authenticate_user(self, email: str, raw_password: str) -> dict:
+        user = self.user_repo.find_by_email(email)
         if not user or not user.password_hash or user.email != email:
             raise InvalidCredentialsException("Credenciales inválidas.")
 

@@ -21,19 +21,17 @@ def handler(event, context):
 
     try:
         body = json.loads(event.get("body", "{}"))
-        phone = body.get("phone")
         password = body.get("password")
         email = body.get("email")
 
-        if not phone or not password or not email:
+        if not email or not password:
             return {
                 "statusCode": 400,
                 "headers": headers,
-                "body": json.dumps({"error": "Debe enviar phone, password y email"})
+                "body": json.dumps({"error": "Debe enviar email y password"})
             }
 
         result = user_service.authenticate_user(
-            phone=phone,
             email=email,
             raw_password=password
         )
